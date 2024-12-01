@@ -26,7 +26,7 @@ function Profile() {
           <div className="relative flex">
 
             {/* Profile sidebar */}
-            <ProfileSidebar profileSidebarOpen={profileSidebarOpen} setProfileSidebarOpen={setProfileSidebarOpen} />
+            {/* <ProfileSidebar profileSidebarOpen={profileSidebarOpen} setProfileSidebarOpen={setProfileSidebarOpen} /> */}
 
             {/* Profile body */}
             <ProfileBody profileSidebarOpen={profileSidebarOpen} setProfileSidebarOpen={setProfileSidebarOpen} />

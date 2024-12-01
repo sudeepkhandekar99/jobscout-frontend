@@ -1,22 +1,80 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import OnboardingImage from '../images/onboarding-image.jpg';
 import OnboardingDecoration from '../images/auth-decoration.png';
 
 function Onboarding03() {
+  const [currentLocation, setCurrentLocation] = useState('');
+  const [bio, setBio] = useState('');
+  const [linkedinLink, setLinkedinLink] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
+
+  const navigate = useNavigate();
+
+  const countWords = (text) => text.trim().split(/\s+/).filter((word) => word).length;
+
+  const uploadImage = async (file, setImageUrl, folder) => {
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/users/users/upload-image/?folder=${folder}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Image upload failed');
+      }
+  
+      const data = await response.json();
+      setImageUrl(data.url);
+      toast.success('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image. Please try again.');
+    }
+  };
+  
+
+  const handleNextStep = () => {
+    if (!currentLocation || !bio || !linkedinLink || !profileImageUrl || !coverImageUrl) {
+      toast.error('Please fill in all fields before proceeding.');
+      return;
+    }
+
+    if (countWords(bio) > 30) {
+      toast.error('Bio must not exceed 30 words.');
+      return;
+    }
+
+    const userData = {
+      currentLocation,
+      bio,
+      linkedinLink,
+      profileImageUrl,
+      coverImageUrl,
+    };
+
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    navigate('/onboarding-04');
+  };
+
   return (
     <main className="bg-white">
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="relative flex">
-
         {/* Content */}
         <div className="w-full md:w-1/2">
-
           <div className="min-h-screen h-full flex flex-col after:flex-1">
-
             <div className="flex-1">
-
               {/* Header */}
               <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                 {/* Logo */}
@@ -70,52 +128,77 @@ function Onboarding03() {
             <div className="px-4 py-8">
               <div className="max-w-md mx-auto">
 
-                <h1 className="text-3xl text-slate-800 font-bold mb-6">Company information ✨</h1>
-                {/* htmlForm */}
-                <form>
-                  <div className="space-y-4 mb-8">
-                    {/* Company Name */}
-                    <div>
-                      <label className="block text-sm font-medium mb-1" htmlFor="company-name">Company Name <span className="text-rose-500">*</span></label>
-                      <input id="company-name" className="form-input w-full" type="text" />
-                    </div>
-                    {/* City and Postal Code */}
-                    <div className="flex space-x-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium mb-1" htmlFor="city">City <span className="text-rose-500">*</span></label>
-                        <input id="city" className="form-input w-full" type="text" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium mb-1" htmlFor="postal-code">Postal Code <span className="text-rose-500">*</span></label>
-                        <input id="postal-code" className="form-input w-full" type="text" />
-                      </div>
-                    </div>
-                    {/* Street Address */}
-                    <div>
-                      <label className="block text-sm font-medium mb-1" htmlFor="street">Street Address <span className="text-rose-500">*</span></label>
-                      <input id="street" className="form-input w-full" type="text" />
-                    </div>
-                    {/* Country */}
-                    <div>
-                      <label className="block text-sm font-medium mb-1" htmlFor="country">Country <span className="text-rose-500">*</span></label>
-                      <select id="country" className="form-select w-full">
-                        <option>USA</option>
-                        <option>Italy</option>
-                        <option>United Kingdom</option>
-                      </select>
-                    </div>
+                <h1 className="text-3xl text-slate-800 font-bold mb-6">Tell us more about yourself ✨</h1>
+                {/* Form */}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Current Location <span className="text-rose-500">*</span></label>
+                    <input
+                      type="text"
+                      placeholder="Enter your current location"
+                      value={currentLocation}
+                      onChange={(e) => setCurrentLocation(e.target.value)}
+                      className="form-input w-full"
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <Link className="text-sm underline hover:no-underline" to="/onboarding-02">&lt;- Back</Link>
-                    <Link className="btn bg-indigo-500 hover:bg-indigo-600 text-white ml-auto" to="/onboarding-04">Next Step -&gt;</Link>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Bio <span className="text-rose-500">*</span></label>
+                    <textarea
+                      placeholder="Write a short bio (max 30 words)"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="form-textarea w-full"
+                    ></textarea>
+                    <p className={`text-sm mt-1 ${countWords(bio) > 30 ? 'text-red-500' : 'text-gray-500'}`}>
+                      {countWords(bio)} / 30 words
+                    </p>
                   </div>
-                </form>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">LinkedIn Profile <span className="text-rose-500">*</span></label>
+                    <input
+                      type="url"
+                      placeholder="Enter your LinkedIn profile URL"
+                      value={linkedinLink}
+                      onChange={(e) => setLinkedinLink(e.target.value)}
+                      className="form-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Profile Photo <span className="text-rose-500">*</span></label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => uploadImage(e.target.files[0], setProfileImageUrl)}
+                      className="form-input w-full"
+                    />
+                    {profileImageUrl && <img src={profileImageUrl} alt="Profile Preview" className="mt-4 w-24 h-24 rounded-full object-cover" />}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cover Photo <span className="text-rose-500">*</span></label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => uploadImage(e.target.files[0], setCoverImageUrl)}
+                      className="form-input w-full"
+                    />
+                    {coverImageUrl && <img src={coverImageUrl} alt="Cover Preview" className="mt-4 w-full h-32 object-cover rounded-md" />}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-6">
+                  <Link className="text-sm underline hover:no-underline" to="/onboarding-02">&lt;- Back</Link>
+                  <button
+                    type="button"
+                    className="btn bg-indigo-500 hover:bg-indigo-600 text-white"
+                    onClick={handleNextStep}
+                  >
+                    Next Step -&gt;
+                  </button>
+                </div>
 
               </div>
             </div>
 
           </div>
-
         </div>
 
         {/* Image */}

@@ -1,22 +1,78 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import OnboardingImage from '../images/onboarding-image.jpg';
 import OnboardingDecoration from '../images/auth-decoration.png';
 
 function Onboarding04() {
+  const navigate = useNavigate();
+
+  const handleGoToDashboard = async () => {
+    try {
+      // Retrieve data from localStorage
+      const userId = localStorage.getItem('user_id');
+      const bio = localStorage.getItem('about_me');
+      const workHistory = JSON.parse(localStorage.getItem('work_history'));
+      const userData = JSON.parse(localStorage.getItem('user_data'));
+
+      if (!userId || !bio || !workHistory || !userData) {
+        toast.error('Required data is missing. Please complete onboarding.');
+        return;
+      }
+
+      // Prepare payload
+      const payload = {
+        user_id: userId,
+        bio,
+        work_history: workHistory,
+        user_data: userData,
+      };
+
+      // API call
+      const response = await fetch('http://127.0.0.1:8000/profiles/profiles/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create profile');
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      // Clear localStorage items
+      localStorage.removeItem('about_me');
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('work_history');
+
+      // Show success toast and navigate to dashboard
+      toast.success('Onboarding successful!');
+      setTimeout(() => {
+        navigate('/community/profile');
+      }, 2000);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to create profile. Please try again.');
+    }
+  };
+
   return (
     <main className="bg-white">
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="relative flex">
-
         {/* Content */}
         <div className="w-full md:w-1/2">
-
           <div className="min-h-screen h-full flex flex-col after:flex-1">
-
             <div className="flex-1">
-
               {/* Header */}
               <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                 {/* Logo */}
@@ -69,21 +125,22 @@ function Onboarding04() {
 
             <div className="px-4 py-8">
               <div className="max-w-md mx-auto">
-
                 <div className="text-center">
                   <svg className="inline-flex w-16 h-16 fill-current mb-6" viewBox="0 0 64 64">
                     <circle className="text-emerald-100" cx="32" cy="32" r="32" />
                     <path className="text-emerald-500" d="m28.5 41-8-8 3-3 5 5 12-12 3 3z" />
                   </svg>
-                  <h1 className="text-3xl text-slate-800 font-bold mb-8">Nice to have you, Acme Inc. 🙌</h1>
-                  <Link className="btn bg-indigo-500 hover:bg-indigo-600 text-white" to="/">Go To Dashboard -&gt;</Link>
+                  <h1 className="text-3xl text-slate-800 font-bold mb-8">Welcome! Your profile is ready 🙌</h1>
+                  <button
+                    className="btn bg-indigo-500 hover:bg-indigo-600 text-white"
+                    onClick={handleGoToDashboard}
+                  >
+                    Let's go! -&gt;
+                  </button>
                 </div>
-
               </div>
             </div>
-
           </div>
-
         </div>
 
         {/* Image */}
@@ -91,9 +148,7 @@ function Onboarding04() {
           <img className="object-cover object-center w-full h-full" src={OnboardingImage} width="760" height="1024" alt="Onboarding" />
           <img className="absolute top-1/4 left-0 transform -translate-x-1/2 ml-8 hidden lg:block" src={OnboardingDecoration} width="218" height="224" alt="Authentication decoration" />
         </div>
-
       </div>
-
     </main>
   );
 }
